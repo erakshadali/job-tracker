@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Application Tracker
 
-## Getting Started
+A small Next.js app for tracking job applications: company, role, platform, status, date and notes. It shows a summary of every status and a response rate, lets you search and filter, and exports the current view to CSV.
 
-First, run the development server:
+Built with **Next.js (App Router), TypeScript in strict mode, and Tailwind CSS**. Data stays in the browser (`localStorage`), so there is no backend or sign-in.
+
+## Features
+
+- Add, update the status of, and delete applications
+- Statuses: Applied, Viewed, Interview, Offer, Rejected, Ghosted
+- Summary counts and a response rate (viewed, interviewed, offered or rejected out of all applications)
+- Search by company, role, location or notes, and filter by status
+- Export the filtered list to CSV (commas and quotes are escaped)
+- Light and dark mode through the system setting
+- "Load sample rows" button with clearly fictional data for a first look
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npm test           # unit tests (Vitest)
+npm run typecheck  # tsc --noEmit
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How it is organised
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Path | What it does |
+| --- | --- |
+| `src/lib/types.ts` | Domain types and the allowed statuses and platforms |
+| `src/lib/applications.ts` | Pure functions: filtering, stats, CSV, date helper (covered by tests) |
+| `src/lib/useApplications.ts` | Storage hook built on `useSyncExternalStore` and `localStorage`, safe when storage is blocked |
+| `src/components/` | Form, table and stats components |
+| `src/app/page.tsx` | The page that ties them together |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The add form leaves the date blank and resolves "today" when you submit. Reading the current time while Next.js prerenders the page breaks the production build.
+- Storage reads are cached by their raw string so `useSyncExternalStore` gets a stable snapshot.
