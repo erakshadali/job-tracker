@@ -2,6 +2,8 @@
 
 A small Next.js app for tracking job applications: company, role, platform, status, date and notes. It shows a summary of every status and a response rate, lets you search and filter, and exports the current view to CSV.
 
+**Live demo:** https://job-tracker-beta-vert.vercel.app
+
 Built with **Next.js (App Router), TypeScript in strict mode, and Tailwind CSS**. Data stays in the browser (`localStorage`), so there is no backend or sign-in.
 
 ## Features
