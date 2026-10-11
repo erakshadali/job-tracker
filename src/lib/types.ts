@@ -15,6 +15,7 @@ export const PLATFORMS = [
   "Instahyre",
   "Indeed",
   "Wellfound",
+  "Internshala",
   "Company site",
   "Email",
   "Referral",
