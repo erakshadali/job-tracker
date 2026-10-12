@@ -44,6 +44,13 @@ export default function Home() {
         </p>
       </header>
 
+      {items.some((a) => a.id.startsWith("sample-")) && (
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          Demo data: these rows are fictional. Add your own application or
+          delete a row and the demo rows are replaced with yours.
+        </p>
+      )}
+
       <StatsBar stats={stats} />
       <ApplicationForm onAdd={add} />
 

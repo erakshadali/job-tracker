@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { SAMPLE_APPLICATIONS } from "./sample";
 import type { Application, NewApplication, Status } from "./types";
 
 const KEY = "job-tracker:applications:v1";
@@ -20,7 +21,9 @@ function readSnapshot(): Application[] {
   if (raw === cachedRaw) return cachedValue;
   cachedRaw = raw;
   try {
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    // First visit (nothing stored yet): show demo rows so the app is not blank.
+    // They are not saved, so the first real change or Clear replaces them.
+    const parsed: unknown = raw === null ? SAMPLE_APPLICATIONS : JSON.parse(raw);
     cachedValue = Array.isArray(parsed) ? (parsed as Application[]) : EMPTY;
   } catch {
     cachedValue = EMPTY;
@@ -53,7 +56,8 @@ export function useApplications() {
 
   const add = useCallback((input: NewApplication) => {
     const item: Application = { ...input, id: crypto.randomUUID() };
-    write([item, ...readSnapshot()]);
+    const real = readSnapshot().filter((a) => !a.id.startsWith("sample-"));
+    write([item, ...real]);
   }, []);
 
   const setStatus = useCallback((id: string, status: Status) => {
