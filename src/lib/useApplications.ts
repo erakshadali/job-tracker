@@ -8,7 +8,9 @@ const KEY = "job-tracker:applications:v1";
 const EMPTY: Application[] = [];
 
 const listeners = new Set<() => void>();
-let cachedRaw: string | null = null;
+// undefined means "never read yet", so a first visit (raw === null) is not
+// mistaken for "unchanged" and the demo rows can show.
+let cachedRaw: string | null | undefined = undefined;
 let cachedValue: Application[] = EMPTY;
 
 function readSnapshot(): Application[] {
