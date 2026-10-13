@@ -7,7 +7,10 @@ import { StatsBar } from "@/components/StatsBar";
 import {
   computeStats,
   filterApplications,
+  mergeApplications,
+  parseImport,
   toCsv,
+  toJson,
 } from "@/lib/applications";
 import { SAMPLE_APPLICATIONS } from "@/lib/sample";
 import { STATUSES } from "@/lib/types";
@@ -17,6 +20,7 @@ import { useApplications } from "@/lib/useApplications";
 export default function Home() {
   const { items, add, setStatus, remove, replaceAll } = useApplications();
   const [filters, setFilters] = useState<Filters>({ query: "", status: "All" });
+  const [importMessage, setImportMessage] = useState("");
 
   const visible = useMemo(
     () => filterApplications(items, filters),
@@ -24,14 +28,40 @@ export default function Home() {
   );
   const stats = useMemo(() => computeStats(items), [items]);
 
-  function exportCsv() {
-    const blob = new Blob([toCsv(visible)], { type: "text/csv" });
+  function download(text: string, type: string, filename: string) {
+    const blob = new Blob([text], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "applications.csv";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function exportCsv() {
+    download(toCsv(visible), "text/csv", "applications.csv");
+  }
+
+  // Backup of every row (ignores the search/filter) that Import JSON can read.
+  function exportJson() {
+    const real = items.filter((a) => !a.id.startsWith("sample-"));
+    download(toJson(real), "application/json", "job-tracker-backup.json");
+  }
+
+  async function importJson(file: File | undefined) {
+    if (!file) return;
+    try {
+      const { merged, added } = mergeApplications(
+        items,
+        parseImport(await file.text()),
+      );
+      replaceAll(merged);
+      setImportMessage(`Imported ${added} new application(s).`);
+    } catch (error) {
+      setImportMessage(
+        error instanceof Error ? error.message : "Could not import this file.",
+      );
+    }
   }
 
   return (
@@ -40,7 +70,8 @@ export default function Home() {
         <h1 className="text-2xl font-semibold">Job Application Tracker</h1>
         <p className="text-sm text-zinc-500">
           Keep every application, its status and its notes in one place. Data
-          stays in this browser.
+          stays in this browser; use Export JSON and Import JSON to move it to
+          another browser or device.
         </p>
       </header>
 
@@ -88,6 +119,26 @@ export default function Home() {
           >
             Export CSV
           </button>
+          <button
+            type="button"
+            onClick={exportJson}
+            disabled={items.every((a) => a.id.startsWith("sample-"))}
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:opacity-50 dark:border-zinc-700"
+          >
+            Export JSON
+          </button>
+          <label className="cursor-pointer rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700">
+            Import JSON
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(e) => {
+                void importJson(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+          </label>
           {items.length === 0 && (
             <button
               type="button"
@@ -98,6 +149,11 @@ export default function Home() {
             </button>
           )}
         </div>
+        {importMessage !== "" && (
+          <p role="status" className="text-sm text-zinc-600 dark:text-zinc-300">
+            {importMessage}
+          </p>
+        )}
         <ApplicationTable
           items={visible}
           onStatus={setStatus}

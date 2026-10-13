@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   computeStats,
   filterApplications,
+  mergeApplications,
+  parseImport,
+  toJson,
   todayIso,
   toCsv,
 } from "./applications";
@@ -62,5 +65,45 @@ describe("toCsv", () => {
 describe("todayIso", () => {
   it("formats a local date as YYYY-MM-DD", () => {
     expect(todayIso(new Date(2026, 9, 8))).toBe("2026-10-08");
+  });
+});
+
+describe("toJson / parseImport", () => {
+  it("round-trips an export", () => {
+    expect(parseImport(toJson(items))).toEqual(items);
+  });
+
+  it("cleans bad fields and drops rows without company or role", () => {
+    const rows = parseImport(
+      JSON.stringify([
+        { company: " Acme ", role: "Dev", platform: "Nope", status: "???" },
+        { company: "", role: "Dev" },
+        "junk",
+      ]),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      company: "Acme",
+      platform: "Other",
+      status: "Applied",
+    });
+    expect(rows[0].appliedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("rejects files that are not a list of applications", () => {
+    expect(() => parseImport("not json")).toThrow("not valid JSON");
+    expect(() => parseImport('{"a":1}')).toThrow("list of applications");
+    expect(() => parseImport("[]")).toThrow("No valid applications");
+  });
+});
+
+describe("mergeApplications", () => {
+  it("skips duplicates and replaces demo rows", () => {
+    const demo: Application = { ...base, id: "sample-1", company: "Demo", status: "Applied", appliedOn: "2026-10-01" };
+    const dupe = { ...items[0], id: "other-id" };
+    const fresh: Application = { ...base, id: "9", company: "New Co", status: "Applied", appliedOn: "2026-10-13" };
+    const { merged, added } = mergeApplications([demo, items[0]], [dupe, fresh]);
+    expect(added).toBe(1);
+    expect(merged.map((a) => a.company)).toEqual(["Alpha", "New Co"]);
   });
 });
