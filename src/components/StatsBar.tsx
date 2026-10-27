@@ -1,46 +1,106 @@
 import { STATUSES } from "@/lib/types";
+import type { Filters } from "@/lib/types";
 import type { Stats } from "@/lib/applications";
+import { STATUS_STYLE } from "@/lib/statusStyle";
 
-const TONE: Record<(typeof STATUSES)[number], string> = {
-  Applied: "text-sky-700 dark:text-sky-300",
-  Viewed: "text-violet-700 dark:text-violet-300",
-  Interview: "text-emerald-700 dark:text-emerald-300",
-  Offer: "text-emerald-800 dark:text-emerald-200",
-  Rejected: "text-rose-700 dark:text-rose-300",
-  Ghosted: "text-zinc-500 dark:text-zinc-400",
-};
-
-export function StatsBar({ stats }: { stats: Stats }) {
+function Card({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+}) {
   return (
-    <section
-      aria-label="Summary"
-      className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8"
-    >
-      <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-        <p className="text-xs uppercase tracking-wide text-zinc-500">Total</p>
-        <p className="text-2xl font-semibold tabular-nums">{stats.total}</p>
+    <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-xs text-muted">{hint}</p>
+    </div>
+  );
+}
+
+export function StatsBar({
+  stats,
+  active,
+  onSelect,
+}: {
+  stats: Stats;
+  active: Filters["status"];
+  onSelect: (status: Filters["status"]) => void;
+}) {
+  const inProgress = stats.byStatus.Interview + stats.byStatus.Offer;
+  const closed = stats.byStatus.Rejected + stats.byStatus.Ghosted;
+
+  return (
+    <section aria-label="Summary" className="grid gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card label="Total" value={stats.total} hint="applications tracked" />
+        <Card
+          label="Response rate"
+          value={`${stats.responseRate}%`}
+          hint="viewed, interviewed, offered or rejected"
+        />
+        <Card
+          label="In progress"
+          value={inProgress}
+          hint="interviews and offers"
+        />
+        <Card label="Closed" value={closed} hint="rejected or ghosted" />
       </div>
-      {STATUSES.map((s) => (
+
+      <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <div
-          key={s}
-          className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+          role="img"
+          aria-label="Applications by status"
+          className="flex h-2.5 overflow-hidden rounded-full bg-surface-2"
         >
-          <p className="text-xs uppercase tracking-wide text-zinc-500">{s}</p>
-          <p className={`text-2xl font-semibold tabular-nums ${TONE[s]}`}>
-            {stats.byStatus[s]}
-          </p>
+          {STATUSES.map((s) =>
+            stats.byStatus[s] > 0 ? (
+              <div
+                key={s}
+                className={STATUS_STYLE[s].bar}
+                style={{ width: `${(stats.byStatus[s] / stats.total) * 100}%` }}
+              />
+            ) : null,
+          )}
         </div>
-      ))}
-      <div className="col-span-2 rounded-lg border border-zinc-200 p-3 sm:col-span-4 lg:col-span-8 dark:border-zinc-800">
-        <p className="text-xs uppercase tracking-wide text-zinc-500">
-          Response rate
-        </p>
-        <p className="text-sm">
-          <span className="text-2xl font-semibold tabular-nums">
-            {stats.responseRate}%
-          </span>{" "}
-          of applications were viewed, interviewed, offered or rejected.
-        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            aria-pressed={active === "All"}
+            onClick={() => onSelect("All")}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+              active === "All"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-line text-muted hover:text-ink"
+            }`}
+          >
+            All {stats.total}
+          </button>
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={active === s}
+              onClick={() => onSelect(active === s ? "All" : s)}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
+                active === s
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line text-muted hover:text-ink"
+              }`}
+            >
+              <span
+                className={`size-2 rounded-full ${STATUS_STYLE[s].bar}`}
+                aria-hidden="true"
+              />
+              {s} {stats.byStatus[s]}
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   );

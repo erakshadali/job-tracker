@@ -6,12 +6,16 @@ import type { NewApplication, Platform, Status } from "@/lib/types";
 import { todayIso } from "@/lib/applications";
 
 const field =
-  "w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700";
+  "w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm placeholder:text-muted/70 focus:border-accent";
 
+// Rendered inside the dialog, so it mounts fresh each time the dialog opens
+// and the fields start empty without any reset logic.
 export function ApplicationForm({
   onAdd,
+  onCancel,
 }: {
   onAdd: (a: NewApplication) => void;
+  onCancel: () => void;
 }) {
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
@@ -30,7 +34,6 @@ export function ApplicationForm({
       setError("Add a company and a role.");
       return;
     }
-    setError("");
     onAdd({
       company: company.trim(),
       role: role.trim(),
@@ -40,35 +43,30 @@ export function ApplicationForm({
       location: location.trim(),
       notes: notes.trim(),
     });
-    setCompany("");
-    setRole("");
-    setLocation("");
-    setNotes("");
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="grid gap-3 rounded-lg border border-zinc-200 p-4 sm:grid-cols-2 dark:border-zinc-800"
-    >
-      <h2 className="text-base font-semibold sm:col-span-2">Add application</h2>
-      <label className="grid gap-1 text-sm">
+    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+      <label className="grid gap-1.5 text-sm font-medium">
         Company
         <input
           className={field}
+          placeholder="e.g. Acme Corp"
+          autoFocus
           value={company}
           onChange={(e) => setCompany(e.target.value)}
         />
       </label>
-      <label className="grid gap-1 text-sm">
+      <label className="grid gap-1.5 text-sm font-medium">
         Role
         <input
           className={field}
+          placeholder="e.g. Frontend Developer"
           value={role}
           onChange={(e) => setRole(e.target.value)}
         />
       </label>
-      <label className="grid gap-1 text-sm">
+      <label className="grid gap-1.5 text-sm font-medium">
         Platform
         <select
           className={field}
@@ -80,7 +78,7 @@ export function ApplicationForm({
           ))}
         </select>
       </label>
-      <label className="grid gap-1 text-sm">
+      <label className="grid gap-1.5 text-sm font-medium">
         Status
         <select
           className={field}
@@ -92,44 +90,56 @@ export function ApplicationForm({
           ))}
         </select>
       </label>
-      <label className="grid gap-1 text-sm">
-        Applied on (blank means today)
+      <label className="grid gap-1.5 text-sm font-medium">
+        Applied on
         <input
           type="date"
           className={field}
           value={appliedOn}
           onChange={(e) => setAppliedOn(e.target.value)}
         />
+        <span className="text-xs font-normal text-muted">
+          Leave blank for today.
+        </span>
       </label>
-      <label className="grid gap-1 text-sm">
+      <label className="grid gap-1.5 text-sm font-medium">
         Location
         <input
           className={field}
+          placeholder="City or Remote"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
       </label>
-      <label className="grid gap-1 text-sm sm:col-span-2">
+      <label className="grid gap-1.5 text-sm font-medium sm:col-span-2">
         Notes
         <textarea
-          rows={2}
+          rows={3}
           className={field}
+          placeholder="Contacts, salary, next steps…"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
       </label>
-      <div className="flex items-center gap-3 sm:col-span-2">
-        <button
-          type="submit"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          Add
-        </button>
+      <div className="flex items-center justify-end gap-3 sm:col-span-2">
         {error && (
-          <p role="alert" className="text-sm text-rose-600">
+          <p role="alert" className="mr-auto text-sm text-rose-600">
             {error}
           </p>
         )}
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:text-ink"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-sm transition hover:opacity-90"
+        >
+          Add application
+        </button>
       </div>
     </form>
   );
